@@ -69,8 +69,6 @@ def normalize_incidents(basepath: str, year: str, sport: str):
                                 frames.append(ndf)
             result = pd.concat(frames)
             result.to_parquet(os.path.join(fullpath, 'incidents.parquet.gzip'), compression='gzip')
-            break
-        break
 
 
 def normalize_statistics(basepath: str, year: str, sport: str):
