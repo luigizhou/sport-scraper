@@ -150,7 +150,7 @@ def main():
     procs = []
     for func in funcs:
         # print(name)
-        proc = Process(target=func, args=("../data/", "2017","basketball",))
+        proc = Process(target=func, args=("../data/", "2016","basketball",))
         procs.append(proc)
         proc.start()
 
