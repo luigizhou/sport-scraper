@@ -122,7 +122,6 @@ func (p *Puller) ExportEventData(sport, dataPah, yearFilter string, maxErrors, p
 
 	for _, year := range years {
 		yearStr := year.Name()
-		fmt.Println(yearStr)
 		months, err := os.ReadDir(fmt.Sprintf("%s/%s", dataPah, year.Name()))
 		if err != nil {
 			return fmt.Errorf("failed to read filesystem for \"months\": %v", err)
@@ -130,6 +129,7 @@ func (p *Puller) ExportEventData(sport, dataPah, yearFilter string, maxErrors, p
 		for _, month := range months {
 			monthStr := month.Name()
 
+			logrus.Infoln("processing month", monthStr)
 			days, err := os.ReadDir(fmt.Sprintf("%s/%s/%s", dataPah, year.Name(), month.Name()))
 			if err != nil {
 				return fmt.Errorf("failed to read filesystem for \"days\": %v", err)

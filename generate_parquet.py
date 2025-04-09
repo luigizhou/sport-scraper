@@ -1,17 +1,12 @@
-import json
+"""
+Generate parquet files per event per day
+"""
 
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
+import json
 import os
 import tarfile
-
-def main():
-    normalize_incidents("/Users/luigizhou/repos/sofascore/data/", "2024","basketball")
-    normalize_statistics("/Users/luigizhou/repos/sofascore/data/", "2024","basketball")
-    normalize_graphs("/Users/luigizhou/repos/sofascore/data/", "2024","basketball")
-    normalize_votes("/Users/luigizhou/repos/sofascore/data/", "2024","basketball")
-
+import pandas as pd
+from multiprocessing import Process
 
 def normalize_votes(basepath: str, year: str, sport: str):
     """
@@ -37,8 +32,11 @@ def normalize_votes(basepath: str, year: str, sport: str):
                                     continue
                                 df = pd.json_normalize(json_obj)
                                 frames.append(df)
-            result = pd.concat(frames)
-            result.to_parquet(os.path.join(fullpath, 'votes.parquet.gzip'), compression='gzip')
+            try:
+                result = pd.concat(frames)
+                result.to_parquet(os.path.join(fullpath, 'votes.parquet.gzip'), compression='gzip')
+            except ValueError:
+                pass
 
 def normalize_incidents(basepath: str, year: str, sport: str):
     """
@@ -67,9 +65,11 @@ def normalize_incidents(basepath: str, year: str, sport: str):
                                 ndf = pd.json_normalize(df.to_dict(orient="records"))
                                 ndf = ndf[ndf.columns.drop(list(ndf.filter(regex='.*fieldTranslations.*')))]
                                 frames.append(ndf)
-            result = pd.concat(frames)
-            result.to_parquet(os.path.join(fullpath, 'incidents.parquet.gzip'), compression='gzip')
-
+            try:
+                result = pd.concat(frames)
+                result.to_parquet(os.path.join(fullpath, 'incidents.parquet.gzip'), compression='gzip')
+            except ValueError:
+                pass
 
 def normalize_statistics(basepath: str, year: str, sport: str):
     """
@@ -103,8 +103,13 @@ def normalize_statistics(basepath: str, year: str, sport: str):
                                 )
                                 df['eventId'] = f.name.split('/')[-1].split('-')[0]
                                 frames.append(df)
-            result = pd.concat(frames)
-            result.to_parquet(os.path.join(fullpath, 'statistics.parquet.gzip'), compression='gzip')
+            try:
+                result = pd.concat(frames)
+                result.to_parquet(os.path.join(fullpath, 'statistics.parquet.gzip'), compression='gzip')
+            except ValueError:
+                pass
+
+
 
 def normalize_graphs(basepath: str, year: str, sport: str):
     """
@@ -132,8 +137,30 @@ def normalize_graphs(basepath: str, year: str, sport: str):
                                 df["periodTime"] = json_obj["periodTime"]
                                 df["periodCount"] = json_obj["periodCount"]
                                 frames.append(df)
-            result = pd.concat(frames)
-            result.to_parquet(os.path.join(fullpath, 'graph.parquet.gzip'), compression='gzip')
+            try:
+                result = pd.concat(frames)
+                result.to_parquet(os.path.join(fullpath, 'graph.parquet.gzip'), compression='gzip')
+            except ValueError:
+                pass
+
+
+
+def main():
+    funcs = [normalize_incidents, normalize_statistics, normalize_graphs, normalize_votes]
+    procs = []
+    for func in funcs:
+        # print(name)
+        proc = Process(target=func, args=("../data/", "2017","basketball",))
+        procs.append(proc)
+        proc.start()
+
+    # complete the processes
+    for proc in procs:
+        proc.join()
+    # normalize_incidents("../data/", "2021","basketball")
+    # normalize_statistics("../data/", "2021","basketball")
+    # normalize_graphs("../data/", "2021","basketball")
+    # normalize_votes("../data/", "2021","basketball")
 
 if __name__ == "__main__":
     main()
